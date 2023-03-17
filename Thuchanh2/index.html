@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <div id="App">
+    <form action="#" method="post" name="todoForm">
+      <input type="text" placeholder="Todo..." id="inputTodo" name="inputTodo">
+      <button type="submit" class="btnAdd">Add</button>
+    </form>
+    <table class="table" border="1" style="border-collapse: collapse; margin-top: 20px;">
+      <thead>
+        <th>UserId</th>
+        <th>Id</th>
+        <th>Title</th>
+        <th>Completed</th>
+        <th>Options</th>
+      </thead>
+      <tbody class="list-todo">
+        
+      </tbody>
+    </table>
+    
+    <div style="padding-top: 20px">
+      <button class="prevBtn">Prev</button>
+      <button class="nextBtn">Next</button>
+    </div>
+  </div>
+  <script>
+    let page = 1;
+let limit = 20;
+let data = [];
+const listTodos = document.querySelector(".list-todo");
+const prevBtn = document.querySelector(".prevBtn");
+const nextBtn = document.querySelector(".nextBtn");
+const todoForm = document.forms['todoForm'];
+const todoInput = document.forms['todoForm']['inputTodo'];
+const btnAdd = document.querySelector(".btnAdd");
+
+async function getTodos(limit, page) {
+  if (page <= 1) {
+    prevBtn.setAttribute("disabled", true);
+  } else if (page >= 10) {
+    nextBtn.setAttribute("disabled", true);
+  }
+  data = await axios
+    .get(
+      `https://jsonplaceholder.typicode.com/todos?_limit=${limit}&_page=${page}`
+    )
+    .then((res) => res.data);
+  render();
+}
+
+async function render() {
+  let newList = [...data]
+    .map(
+      (e) =>
+        `<tr><td>${e.userId}</td><td>${e.id}</td><td>${e.title}</td><td>${e.completed}</td><td><button class="editBtn">Edit</button><button class="delBtn">Delete</button></td></tr>`
+    )
+    .join("");
+  listTodos.innerHTML = newList;
+
+  const editBtn = document.querySelectorAll('.editBtn');
+  const delbtn = document.querySelectorAll('.delBtn');
+  editBtn.forEach((btn, index) => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      todoInput.value = data[index].title;
+      btnAdd.textContent = 'Edit';
+    })
+  });
+  delbtn.forEach((btn, index) => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      let result = await axios.delete(`https://jsonplaceholder.typicode.com/todos/${index}`);
+      if (result === 200) {
+        alert('Simulation: deleted')
+        console.log(result);
+      } else {
+        alert('Simulation: delete failed');
+        console.log(result);
+      }
+    })
+  });
+  
+}
+
+todoForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const newTodo = {id: 222, title: todoInput.value, completed: false};
+  let result = await axios.post('https://jsonplaceholder.typicode.com/todos', newTodo);
+  if (result) alert('Added Successful');
+  else alert('Error');
+  btnAdd.textContent = 'Add';
+  todoInput.value = '';
+  console.log(newTodo);
+  getTodos(limit, page);
+});
+
+prevBtn.addEventListener("click", (e) => {
+  nextBtn.removeAttribute("disabled");
+  --page;
+  e.preventDefault();
+  getTodos(limit, page);
+});
+
+nextBtn.addEventListener("click", (e) => {
+  prevBtn.removeAttribute("disabled");
+  e.preventDefault();
+  ++page;
+  getTodos(limit, page);
+});
+
+getTodos(limit, page);
+
+
+  </script>
+</body>
+</html>
